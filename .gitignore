@@ -1,0 +1,7 @@
+node_modules
+.vscode
+.cache
+elm-stuff/
+dist/
+.env.local
+.env

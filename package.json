@@ -1,0 +1,18 @@
+{
+  "name": "elm-e-stat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cross-env npx parcel ./index.html --open"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cross-env": "~5.2.0",
+    "elm-hot": "~1.1.0",
+    "node-elm-compiler": "~5.0.3",
+    "parcel-bundler": "~1.12.3"
+  }
+}
