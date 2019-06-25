@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import Json.Decode exposing (Decoder, field, string)
+import Json.Decode as D
 
 
 
@@ -23,6 +23,41 @@ main =
 
 
 -- MODEL
+
+
+type alias TxData =
+    { blockNumber : Int
+    , timeStamp : Int
+    , hash : String
+    , nonce : Int
+    , blockHash : String
+    , transactionIndex : Int
+    , from : String
+    , to : String
+    , value : String
+    , gas : String
+    , gasPrice : String
+    , isError : Int
+    , txreceipt_status : Int
+    , input : String -- Hexed number
+    , contractAddress : String
+    , cumulativeGasUsed : String
+    , gasUsed : String
+    , confirmations : Int
+    }
+
+
+type alias ApiResponse =
+    { status : Int
+    , message : String
+
+    -- , result: List String
+    }
+
+
+initApiResponse : ApiResponse
+initApiResponse =
+    ApiResponse 99 ""
 
 
 type FetchingStatus
@@ -54,6 +89,22 @@ type Msg
     | SubmitForm
 
 
+makeApiUrl : String -> String
+makeApiUrl address =
+    "http://api.etherscan.io/api?module=account&action=txlist&address=" ++ address ++ "&startblock=0&endblock=99999999&sort=asc"
+
+
+responseDecode : D.Decoder String
+responseDecode =
+    -- D.map2 ApiResponse
+    -- (D.field "status" D.int)
+    D.field "message" D.string
+
+
+
+-- (D.at ["result"] (D.List D.String))
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -63,8 +114,8 @@ update msg model =
         SubmitForm ->
             ( { model | status = Loading }
             , Http.get
-                { expect = Http.expectString FetchHistory
-                , url = "http://api.etherscan.io/api?module=account&action=txlist&address=" ++ model.address ++ "&startblock=0&endblock=99999999&sort=asc"
+                { expect = Http.expectJson FetchHistory responseDecode
+                , url = makeApiUrl model.address
                 }
             )
 
@@ -77,16 +128,6 @@ update msg model =
                     ( { model | status = Error }, Cmd.none )
 
 
-
--- ( model
--- , Http.get
---     { url = "https://elm-lang.org/assets/public-opinion.txt"
---     , expect = Http.expectString
---     }
--- )
--- VIEW
-
-
 view : Model -> Html Msg
 view model =
     Html.main_ []
@@ -95,21 +136,19 @@ view model =
             [ viewInput "text" "0x…" model.address Name
             , button [ type_ "submit" ] [ text "Get data!" ]
             ]
-        , pre []
-            [ text
-                (case model.status of
-                    Success ->
-                        model.response
+        , div []
+            [ case model.status of
+                Success ->
+                    Html.pre [] [ text model.response ]
 
-                    Error ->
-                        "Саня, хуй соси"
+                Error ->
+                    text "Саня, хуй соси"
 
-                    None ->
-                        ""
+                None ->
+                    text ""
 
-                    Loading ->
-                        "..."
-                )
+                Loading ->
+                    text "..."
             ]
         ]
 
