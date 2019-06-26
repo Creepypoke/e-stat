@@ -1,11 +1,13 @@
 module Main exposing (Model, Msg(..), init, main, update, view, viewInput)
 
 import Browser
+import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as D
+import Json.Decode.Extra as DE
 
 
 
@@ -26,38 +28,37 @@ main =
 
 
 type alias TxData =
-    { blockNumber : Int
-    , timeStamp : Int
+    { blockNumber : String
+    , timeStamp : String
     , hash : String
-    , nonce : Int
+    , nonce : String
     , blockHash : String
-    , transactionIndex : Int
+    , transactionIndex : String
     , from : String
     , to : String
     , value : String
     , gas : String
     , gasPrice : String
-    , isError : Int
-    , txreceipt_status : Int
+    , isError : String
+    , txreceipt_status : String
     , input : String -- Hexed number
     , contractAddress : String
     , cumulativeGasUsed : String
     , gasUsed : String
-    , confirmations : Int
+    , confirmations : String
     }
 
 
 type alias ApiResponse =
-    { status : Int
+    { status : String
     , message : String
-
-    -- , result: List String
+    , result : List TxData
     }
 
 
 initApiResponse : ApiResponse
 initApiResponse =
-    ApiResponse 99 ""
+    ApiResponse "99" "" []
 
 
 type FetchingStatus
@@ -70,13 +71,14 @@ type FetchingStatus
 type alias Model =
     { address : String
     , status : FetchingStatus
-    , response : String
+    , error : String
+    , response : ApiResponse
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "" None "", Cmd.none )
+    ( Model "" None "" initApiResponse, Cmd.none )
 
 
 
@@ -85,24 +87,44 @@ init _ =
 
 type Msg
     = Name String
-    | FetchHistory (Result Http.Error String)
+    | FetchHistory (Result Http.Error ApiResponse)
     | SubmitForm
 
 
 makeApiUrl : String -> String
 makeApiUrl address =
-    "http://api.etherscan.io/api?module=account&action=txlist&address=" ++ address ++ "&startblock=0&endblock=99999999&sort=asc"
+    "https://api.etherscan.io/api?module=account&action=txlist&address=" ++ address ++ "&startblock=0&endblock=99999999&sort=asc"
 
 
-responseDecode : D.Decoder String
+txDecoder : D.Decoder TxData
+txDecoder =
+    D.succeed TxData
+        |> DE.andMap (D.field "blockNumber" D.string)
+        |> DE.andMap (D.field "timeStamp" D.string)
+        |> DE.andMap (D.field "hash" D.string)
+        |> DE.andMap (D.field "nonce" D.string)
+        |> DE.andMap (D.field "blockHash" D.string)
+        |> DE.andMap (D.field "transactionIndex" D.string)
+        |> DE.andMap (D.field "from" D.string)
+        |> DE.andMap (D.field "to" D.string)
+        |> DE.andMap (D.field "value" D.string)
+        |> DE.andMap (D.field "gas" D.string)
+        |> DE.andMap (D.field "gasPrice" D.string)
+        |> DE.andMap (D.field "isError" D.string)
+        |> DE.andMap (D.field "txreceipt_status" D.string)
+        |> DE.andMap (D.field "input" D.string)
+        |> DE.andMap (D.field "contractAddress" D.string)
+        |> DE.andMap (D.field "cumulativeGasUsed" D.string)
+        |> DE.andMap (D.field "gasUsed" D.string)
+        |> DE.andMap (D.field "confirmations" D.string)
+
+
+responseDecode : D.Decoder ApiResponse
 responseDecode =
-    -- D.map2 ApiResponse
-    -- (D.field "status" D.int)
-    D.field "message" D.string
-
-
-
--- (D.at ["result"] (D.List D.String))
+    D.map3 ApiResponse
+        (D.field "status" D.string)
+        (D.field "message" D.string)
+        (D.field "result" (D.list txDecoder))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -120,12 +142,14 @@ update msg model =
             )
 
         FetchHistory result ->
-            case result of
-                Ok response ->
-                    ( { model | status = Success, response = response }, Cmd.none )
+            log "Result"
+                (case result of
+                    Ok apiResponse ->
+                        ( { model | status = Success, response = apiResponse }, Cmd.none )
 
-                Err _ ->
-                    ( { model | status = Error }, Cmd.none )
+                    Err error ->
+                        ( { model | status = Error, error = Debug.toString error }, Cmd.none )
+                )
 
 
 view : Model -> Html Msg
@@ -139,10 +163,10 @@ view model =
         , div []
             [ case model.status of
                 Success ->
-                    Html.pre [] [ text model.response ]
+                    Html.pre [] [ text model.response.message ]
 
                 Error ->
-                    text "Саня, хуй соси"
+                    text model.error
 
                 None ->
                     text ""
