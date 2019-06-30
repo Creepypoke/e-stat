@@ -157,9 +157,9 @@ view : Model -> Html Msg
 view model =
     Html.main_ []
         [ h1 [] [ text "ΞStat" ]
-        , Html.form [ onSubmit SubmitForm ]
+        , Html.form [ class "main-form", onSubmit SubmitForm ]
             [ viewInput (PropsInput "text" "0x…" model.address) Name
-            , button [ type_ "submit" ] [ text "Get data!" ]
+            , button [ class "main-button", type_ "submit" ] [ text "Get data!" ]
             ]
         , div []
             [ case model.status of
@@ -187,7 +187,7 @@ type alias PropsInput =
 
 viewInput : PropsInput -> (String -> msg) -> Html msg
 viewInput props toMsg =
-    label [] [ span [] [ text "Enter address" ], input [ type_ props.text, placeholder props.placeholder, value props.value, onInput toMsg ] [] ]
+    label [] [ span [] [ text "Enter address" ], input [ class "main-input", type_ props.text, placeholder props.placeholder, value props.value, onInput toMsg ] [] ]
 
 
 type alias PropsTxItem =
@@ -221,7 +221,11 @@ viewTransactionItem : TxData -> Html msg
 viewTransactionItem props =
     li [ class "tx-item" ]
         [ a [ class "tx-item--link", href ("https://etherscan.io/tx/" ++ props.hash) ]
-            [ div [ class "tx-item-address" ] [ text (props.from ++ " --> " ++ props.to) ]
-            , div [ class "tx-item-timestamp" ] [ text props.timeStamp ]
+            [ div [ class "tx-item-address" ]
+                [ div [ class "tx-item-address-from" ] [ text props.from ]
+                , div [ class "tx-item-address-delimiter" ] [ text "➡️" ]
+                , div [ class "tx-item-address-to" ] [ text props.to ]
+                ]
+            , div [ class "tx-item-timestamp" ] [ text (props.timeStamp ++ "000") ]
             ]
         ]

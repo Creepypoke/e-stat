@@ -1,0 +1,86 @@
+--text-color: #313131;
+
+html,
+body,
+main {
+    color: var(--text-color);
+    font-family: 'Arial', 'Tahoma', sans-serif;
+}
+
+input,
+h1,
+button {
+    font-family: 'Arial', 'Tahoma', sans-serif;
+}
+
+h1 {
+    text-align: center;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+li {
+    margin: 0;
+    padding: 0;
+}
+
+.main-form {
+    margin-bottom: 32px;
+}
+
+.main-input {
+    font-size: 2em;
+    width: 100%;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.main-button {
+    display: block;
+    width: 100%;
+    font-size: 1.8em;
+}
+
+.tx-item {
+    display: block;
+    padding: 8px 4px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+}
+
+.tx-item:before {
+    content: '📜';
+    display: block;
+}
+
+.tx-item--link:hover,
+.tx-item--link:focus {
+    box-shadow: 0 0 8px -2px lightblue;
+}
+
+.tx-item--link {
+    display: block;
+    text-decoration: none;
+    color: var(--text-color);
+    font-family: 'Arial', 'Tahoma', sans-serif;
+}
+
+.tx-item-address {
+    border-bottom: 1px solid lightblue;
+    margin-bottom: 4px;
+}
+
+.tx-item-address-from {
+}
+.tx-item-address-delimiter {
+}
+.tx-item-address-to {
+}
+
+.tx-item-timestamp:before {
+    content: '🕖';
+}
