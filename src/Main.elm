@@ -7,7 +7,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode as D
-import Json.Decode.Extra as DE
+import Json.Decode.Extra exposing (andMap)
+import Time exposing (..)
 
 
 
@@ -99,24 +100,24 @@ makeApiUrl address =
 txDecoder : D.Decoder TxData
 txDecoder =
     D.succeed TxData
-        |> DE.andMap (D.field "blockNumber" D.string)
-        |> DE.andMap (D.field "timeStamp" D.string)
-        |> DE.andMap (D.field "hash" D.string)
-        |> DE.andMap (D.field "nonce" D.string)
-        |> DE.andMap (D.field "blockHash" D.string)
-        |> DE.andMap (D.field "transactionIndex" D.string)
-        |> DE.andMap (D.field "from" D.string)
-        |> DE.andMap (D.field "to" D.string)
-        |> DE.andMap (D.field "value" D.string)
-        |> DE.andMap (D.field "gas" D.string)
-        |> DE.andMap (D.field "gasPrice" D.string)
-        |> DE.andMap (D.field "isError" D.string)
-        |> DE.andMap (D.field "txreceipt_status" D.string)
-        |> DE.andMap (D.field "input" D.string)
-        |> DE.andMap (D.field "contractAddress" D.string)
-        |> DE.andMap (D.field "cumulativeGasUsed" D.string)
-        |> DE.andMap (D.field "gasUsed" D.string)
-        |> DE.andMap (D.field "confirmations" D.string)
+        |> andMap (D.field "blockNumber" D.string)
+        |> andMap (D.field "timeStamp" D.string)
+        |> andMap (D.field "hash" D.string)
+        |> andMap (D.field "nonce" D.string)
+        |> andMap (D.field "blockHash" D.string)
+        |> andMap (D.field "transactionIndex" D.string)
+        |> andMap (D.field "from" D.string)
+        |> andMap (D.field "to" D.string)
+        |> andMap (D.field "value" D.string)
+        |> andMap (D.field "gas" D.string)
+        |> andMap (D.field "gasPrice" D.string)
+        |> andMap (D.field "isError" D.string)
+        |> andMap (D.field "txreceipt_status" D.string)
+        |> andMap (D.field "input" D.string)
+        |> andMap (D.field "contractAddress" D.string)
+        |> andMap (D.field "cumulativeGasUsed" D.string)
+        |> andMap (D.field "gasUsed" D.string)
+        |> andMap (D.field "confirmations" D.string)
 
 
 responseDecode : D.Decoder ApiResponse
@@ -157,13 +158,13 @@ view model =
     Html.main_ []
         [ h1 [] [ text "ΞStat" ]
         , Html.form [ onSubmit SubmitForm ]
-            [ viewInput "text" "0x…" model.address Name
+            [ viewInput (PropsInput "text" "0x…" model.address) Name
             , button [ type_ "submit" ] [ text "Get data!" ]
             ]
         , div []
             [ case model.status of
                 Success ->
-                    Html.pre [] [ text model.response.message ]
+                    Html.ul [] (List.map viewTransactionItem model.response.result)
 
                 Error ->
                     text model.error
@@ -177,6 +178,50 @@ view model =
         ]
 
 
-viewInput : String -> String -> String -> (String -> msg) -> Html msg
-viewInput t p v toMsg =
-    label [] [ span [] [ text "Enter address" ], input [ type_ t, placeholder p, value v, onInput toMsg ] [] ]
+type alias PropsInput =
+    { text : String
+    , placeholder : String
+    , value : String
+    }
+
+
+viewInput : PropsInput -> (String -> msg) -> Html msg
+viewInput props toMsg =
+    label [] [ span [] [ text "Enter address" ], input [ type_ props.text, placeholder props.placeholder, value props.value, onInput toMsg ] [] ]
+
+
+type alias PropsTxItem =
+    { blockHash : String
+    , hash : String
+    , timestamp : String
+    , from : String
+    , to : String
+    , input : String
+    }
+
+
+timestampToDate : String -> Posix
+timestampToDate timestamp =
+    let
+        t =
+            timestamp
+                |> (++) "000"
+                |> String.trim
+                |> String.toInt
+    in
+    case t of
+        Nothing ->
+            millisToPosix 0
+
+        Just time ->
+            millisToPosix time
+
+
+viewTransactionItem : TxData -> Html msg
+viewTransactionItem props =
+    li [ class "tx-item" ]
+        [ a [ class "tx-item--link", href ("https://etherscan.io/tx/" ++ props.hash) ]
+            [ div [ class "tx-item-address" ] [ text (props.from ++ " --> " ++ props.to) ]
+            , div [ class "tx-item-timestamp" ] [ text props.timeStamp ]
+            ]
+        ]
